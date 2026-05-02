@@ -6,6 +6,9 @@ from bs4 import BeautifulSoup
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK")
 TARGET_URL = "https://fruityblox.com/stock"
 
+# Aranacak meyve tipleri
+TARGET_FRUITS = ["elemental", "mythical", "common", "magma", "flame"]
+
 def check_stock():
     # Tarayıcı taklidi (User-Agent)
     headers = {
@@ -21,20 +24,29 @@ def check_stock():
         # Sayfadaki tüm metni alıp küçük harfe çeviriyoruz
         page_text = soup.text.lower()
         
-        # "mythical" kelimesini kontrol ediyoruz
-        if "mythical" in page_text:
-            print("Mythical meyve bulundu! Bildirim gönderiliyor...")
-            send_discord_alert()
+        # Bulunan meyveleri listelemek için boş bir liste
+        found_fruits = []
+        
+        # Hedef meyveleri kontrol ediyoruz
+        for fruit in TARGET_FRUITS:
+            if fruit in page_text:
+                found_fruits.append(fruit.capitalize())
+        
+        if found_fruits:
+            print(f"Meyveler bulundu: {', '.join(found_fruits)}. Bildirim gönderiliyor...")
+            send_discord_alert(found_fruits)
         else:
-            print("Şu an Mythical meyve stokta yok.")
+            print("Aranan meyvelerden hiçbiri stokta yok.")
             
     except Exception as e:
         print(f"Hata oluştu: {e}")
 
-def send_discord_alert():
-    # Mesaj içeriği ve bot ayarları
+def send_discord_alert(fruits):
+    # Mesaj içeriğini dinamik olarak oluşturuyoruz
+    fruits_list_str = "\n".join([f"- **{fruit}**" for fruit in fruits])
+    
     data = {
-        "content": "🚨 **Mythical Meyve Alarmı!** 🚨\nFruityBlox stoklarına Mythical bir meyve düştü! Hemen kontrol et: https://fruityblox.com/stock",
+        "content": f"🚨 **Blox Fruits Stok Alarmı!** 🚨\n\nFruityBlox stoklarında şu meyveler bulundu:\n{fruits_list_str}\n\nHemen kontrol et: https://fruityblox.com/stock",
         "username": "BloxStock Ajanı",
         "avatar_url": "https://i.imgur.com/AfFp7pu.png"
     }
