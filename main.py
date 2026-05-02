@@ -6,7 +6,7 @@ WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK")
 TARGET_URL = "https://fruityblox.com/stock"
 
 # Aranan meyveler listesi (İstediğin zaman buraya yeni isimler ekleyebilirsin)
-SEARCH_KEYWORDS = ["elemental", "mythical", "kitsune", "leopard", "dragon", "magma", "flame", "dough", "t-rex"]
+SEARCH_KEYWORDS = ["yeti", "tiger", "mammoth", "gravity", "mythical", "kitsune", "leopard", "dragon", "magma", "dough", "t-rex"]
 
 def check_stock():
     with sync_playwright() as p:
