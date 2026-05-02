@@ -1,60 +1,58 @@
 import os
 import requests
-from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
-# GitHub Secrets üzerinden gelecek olan Webhook URL
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK")
 TARGET_URL = "https://fruityblox.com/stock"
 
-# Aranacak meyve tipleri
-TARGET_FRUITS = ["elemental", "mythical", "common", "magma", "flame"]
+# Senin istediğin test ve gerçek değerler
+SEARCH_KEYWORDS = ["elemental", "mythical", "common", "magma", "flame", "kitsune", "leopard", "dragon"]
 
 def check_stock():
-    # Tarayıcı taklidi (User-Agent)
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    
-    try:
-        response = requests.get(TARGET_URL, headers=headers)
-        response.raise_for_status()
+    with sync_playwright() as p:
+        # Görünmez tarayıcıyı başlat
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
         
-        soup = BeautifulSoup(response.text, 'html.parser')
+        print("Siteye giriliyor...")
+        page.goto(TARGET_URL)
         
-        # Sayfadaki tüm metni alıp küçük harfe çeviriyoruz
-        page_text = soup.text.lower()
-        
-        # Bulunan meyveleri listelemek için boş bir liste
-        found_fruits = []
-        
-        # Hedef meyveleri kontrol ediyoruz
-        for fruit in TARGET_FRUITS:
-            if fruit in page_text:
-                found_fruits.append(fruit.capitalize())
-        
-        if found_fruits:
-            print(f"Meyveler bulundu: {', '.join(found_fruits)}. Bildirim gönderiliyor...")
-            send_discord_alert(found_fruits)
-        else:
-            print("Aranan meyvelerden hiçbiri stokta yok.")
+        # Meyvelerin yüklendiği alanı bekle (Loading animasyonunun gitmesini bekle)
+        # Sitede meyve isimleri genellikle büyük harfle yazılır (MAGMA, FLAME)
+        try:
+            page.wait_for_selector("text=Normal", timeout=20000)
+            # Sayfanın tamamen yüklenmesi için 5 saniye daha bekle
+            page.wait_for_timeout(5000)
             
-    except Exception as e:
-        print(f"Hata oluştu: {e}")
+            # Sayfadaki tüm metni çek
+            content = page.content().lower()
+            
+            found = []
+            for word in SEARCH_KEYWORDS:
+                if word in content:
+                    found.append(word.capitalize())
+            
+            if found:
+                print(f"Buldum: {found}")
+                send_discord_alert(found)
+            else:
+                print("Aranan meyveler şu an stokta yok.")
+                
+        except Exception as e:
+            print(f"Hata: Sayfa yüklenemedi veya meyveler bulunamadı. {e}")
+        
+        browser.close()
 
 def send_discord_alert(fruits):
-    # Mesaj içeriğini dinamik olarak oluşturuyoruz
-    fruits_list_str = "\n".join([f"- **{fruit}**" for fruit in fruits])
-    
+    fruit_list = ", ".join(fruits)
     data = {
-        "content": f"🚨 **Blox Fruits Stok Alarmı!** 🚨\n\nFruityBlox stoklarında şu meyveler bulundu:\n{fruits_list_str}\n\nHemen kontrol et: https://fruityblox.com/stock",
-        "username": "BloxStock Ajanı",
-        "avatar_url": "https://i.imgur.com/AfFp7pu.png"
+        "content": f"🚨 **STOK ALARMI!** 🚨\n\nŞu meyveler bulundu: **{fruit_list}**\n\nKontrol et: {TARGET_URL}",
+        "username": "Blox Ajanı"
     }
-    
     requests.post(WEBHOOK_URL, json=data)
 
 if __name__ == "__main__":
     if WEBHOOK_URL:
         check_stock()
     else:
-        print("HATA: DISCORD_WEBHOOK ortam değişkeni bulunamadı.")
+        print("Webhook URL eksik!")
