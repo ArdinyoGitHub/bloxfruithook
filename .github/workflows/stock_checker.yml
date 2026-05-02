@@ -1,29 +1,23 @@
 name: Blox Fruits Stock Checker
-
 on:
   schedule:
-    # Cron formatı: Her 4 saatte bir çalıştırır. (Blox Fruits stok yenilenme süresi)
     - cron: '0 */4 * * *'
-  workflow_dispatch: # Bu satır, kodu GitHub üzerinden manuel olarak da tetikleyebilmeni sağlar.
-
+  workflow_dispatch:
 jobs:
   check-stock:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Repoyu Klonla
-      uses: actions/checkout@v3
-
-    - name: Python'u Kur
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Kütüphaneleri Yükle
-      run: pip install -r requirements.txt
-
-    - name: Script'i Çalıştır
-      env:
-        # GitHub Secrets'a ekleyeceğimiz değişkeni Python koduna aktarıyoruz
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      run: python main.py
+      - name: Repoyu Klonla
+        uses: actions/checkout@v3
+      - name: Python'u Kur
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Kütüphaneleri ve Tarayıcıyı Kur
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+      - name: Script'i Çalıştır
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python main.py
