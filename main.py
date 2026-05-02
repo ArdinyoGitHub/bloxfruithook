@@ -6,7 +6,7 @@ WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK")
 TARGET_URL = "https://fruityblox.com/stock"
 
 # Senin istediğin test ve gerçek değerler
-SEARCH_KEYWORDS = ["mythical", "magma", "kitsune", "leopard", "yeti", "dragon", "portal", "buddha", "mammoth", "t-rex", "trex", "dough", "control", "gravity"]
+SEARCH_KEYWORDS = ["mythical", "magma", "kitsune", "tiger", "leopard", "yeti", "dragon", "portal", "buddha", "mammoth", "t-rex", "trex", "dough", "control", "gravity"]
 
 def check_stock():
     with sync_playwright() as p:
