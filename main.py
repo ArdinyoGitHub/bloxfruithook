@@ -96,13 +96,13 @@ def send_alerts(normal, mirage):
     # 2. TELEFON (NTFY) BİLDİRİMİ
     if NTFY_TOPIC != "NTFY_KANAL_ADIN_BURAYA":
         try:
-            # Telefonun acil durum gibi titremesi için öncelik ekliyoruz
+            # Başlıktaki emojiyi kaldırdık ve Türkçe karakter kullanmadık (latin-1 hatası almamak için).
+            # "Tags" kısmına "fire" ekledik; ntfy telefonu titretecek ve başlığa 🔥 emojisini kendi koyacak.
             headers = {
-                "Title": "🔥 STOKTA EFSANE MEYVE VAR!",
+                "Title": "STOK ALARMI",
                 "Priority": "high", 
-                "Tags": "warning,video_game"
+                "Tags": "fire,warning,video_game"
             }
-            # Mesajı Türkçe karakter sorunu olmaması için utf-8 ile encode ediyoruz
             requests.post(f"https://ntfy.sh/{NTFY_TOPIC}", data=msg.encode('utf-8'), headers=headers)
             print("Telefon bildirimi gönderildi.")
         except Exception as e:
