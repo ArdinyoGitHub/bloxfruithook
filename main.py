@@ -94,7 +94,7 @@ def send_alerts(normal, mirage):
             print(f"Discord hatası: {e}")
 
     # 2. TELEFON (NTFY) BİLDİRİMİ
-    if NTFY_TOPIC != "NTFY_KANAL_ADIN_BURAYA":
+    if NTFY_TOPIC != "bloxfruitmythic_ardao":
         try:
             # Başlıktaki emojiyi kaldırdık ve Türkçe karakter kullanmadık (latin-1 hatası almamak için).
             # "Tags" kısmına "fire" ekledik; ntfy telefonu titretecek ve başlığa 🔥 emojisini kendi koyacak.
