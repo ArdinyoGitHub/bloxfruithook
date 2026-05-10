@@ -94,10 +94,9 @@ def send_alerts(normal, mirage):
             print(f"Discord hatası: {e}")
 
     # 2. TELEFON (NTFY) BİLDİRİMİ
-    if NTFY_TOPIC != "bloxfruitmythic_ardao":
+    # 2. TELEFON (NTFY) BİLDİRİMİ
+    if NTFY_TOPIC:  # Sadece bu satırı düzelttik, "eğer NTFY_TOPIC doluysa çalıştır" dedik.
         try:
-            # Başlıktaki emojiyi kaldırdık ve Türkçe karakter kullanmadık (latin-1 hatası almamak için).
-            # "Tags" kısmına "fire" ekledik; ntfy telefonu titretecek ve başlığa 🔥 emojisini kendi koyacak.
             headers = {
                 "Title": "STOK ALARMI",
                 "Priority": "high", 
