@@ -8,7 +8,7 @@ WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK")
 TARGET_URL = "https://fruityblox.com/stock"
 
 # BURA ÇOK ÖNEMLİ: Telefonda oluşturduğun benzersiz ntfy kanal adını buraya yaz!
-NTFY_TOPIC = "NTFY_KANAL_ADIN_BURAYA" 
+NTFY_TOPIC = "bloxfruitmythic_ardao" 
 
 SEARCH_KEYWORDS = ["yeti", "tiger", "mammoth", "gravity", "mythical", "kitsune", "leopard", "dragon", "magma", "dough", "t-rex"]
 
