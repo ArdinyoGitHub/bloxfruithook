@@ -7,23 +7,22 @@ from playwright.sync_api import sync_playwright
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK")
 TARGET_URL = "https://fruityblox.com/stock"
 
+# BURA ÇOK ÖNEMLİ: Telefonda oluşturduğun benzersiz ntfy kanal adını buraya yaz!
+NTFY_TOPIC = "NTFY_KANAL_ADIN_BURAYA" 
+
 SEARCH_KEYWORDS = ["yeti", "tiger", "mammoth", "gravity", "mythical", "kitsune", "leopard", "dragon", "magma", "dough", "t-rex"]
 
 def check_stock():
-    # Siteden gelecek verileri tutacağımız kutular
     scraped_data = {"normal": [], "mirage": []}
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled"])
         page = browser.new_page()
         
-        # Tarayıcı siteyi yüklerken arka planda gidip gelen dosyaları dinliyoruz
         def handle_response(response):
             try:
-                # Eğer yanıtın içinde bizim meyvelerin verisi varsa
                 text = response.text()
                 if '"normal":[' in text and '"mirage":[' in text:
-                    # Saf veriyi (JSON) regex ile cımbızla çekiyoruz
                     match = re.search(r'{"normal":\[.*?\],"mirage":\[.*?\]}', text)
                     if match:
                         data = json.loads(match.group(0))
@@ -36,68 +35,78 @@ def check_stock():
         
         print("Siteye giriliyor ve arka plan verileri dinleniyor...")
         page.goto(TARGET_URL)
-        page.wait_for_selector("text=Normal", timeout=20000)
-        page.wait_for_timeout(3000) # Verilerin tamamen inmesi için kısa bir bekleme
         
+        try:
+            page.wait_for_selector("text=Normal", timeout=20000)
+            page.wait_for_timeout(3000)
+        except:
+            print("Sayfa yüklenirken zaman aşımı oldu ama veriler gelmiş olabilir.")
+            
         browser.close()
 
-    # Eğer verileri yakalamayı başardıysak:
     if scraped_data["normal"] or scraped_data["mirage"]:
         found_normal = []
         found_mirage = []
-        
-        # Sadece aradığımız kelimeleri küçük harfe çevirelim ki eşleşme kolay olsun
         keywords = [kw.lower() for kw in SEARCH_KEYWORDS]
         
-        # 1. Normal Stok Kontrolü (Hata payı 0, çünkü sadece Normal klasörüne bakıyor)
         for fruit in scraped_data["normal"]:
             name = fruit.get("name", "")
             fruit_type = fruit.get("type", "")
-            
-            # Hem isme hem meyvenin türüne bakıyoruz
             for kw in keywords:
                 if kw in name.lower() or kw in fruit_type.lower():
                     if name not in found_normal:
-                        found_normal.append(name) # Orijinal ismi listeye ekle
+                        found_normal.append(name)
                     break
                     
-        # 2. Mirage Stok Kontrolü
         for fruit in scraped_data["mirage"]:
             name = fruit.get("name", "")
             fruit_type = fruit.get("type", "")
-            
             for kw in keywords:
                 if kw in name.lower() or kw in fruit_type.lower():
                     if name not in found_mirage:
                         found_mirage.append(name)
                     break
         
-        # Sadece Normal stokta varsa bildirim gönder
         if found_normal:
-            print(f"Normal stokta meyve bulundu! Bildirim gönderiliyor...")
-            send_discord_alert(found_normal, found_mirage)
+            print(f"Normal stokta meyve bulundu! Bildirimler gönderiliyor...")
+            send_alerts(found_normal, found_mirage)
         else:
             print("Normal stokta aranan meyve yok. Bildirim gönderilmedi.")
-            
     else:
-        print("Hata: Veri paketi bulunamadı. Sitenin yapısı değişmiş olabilir.")
+        print("Hata: Veri paketi bulunamadı.")
 
-def send_discord_alert(normal, mirage):
-    msg = "🚨 **Blox Fruits Stok Raporu** 🚨\n\n"
-    
-    msg += f"🏪 **Normal Stok:** {', '.join(normal)}\n"
-    
+def send_alerts(normal, mirage):
+    # --- ORTAK MESAJ METNİ ---
+    msg = "🚨 Blox Fruits Stok Raporu 🚨\n\n"
+    msg += f"🏪 Normal Stok: {', '.join(normal)}\n"
     if mirage:
-        msg += f"🏝️ **Mirage Stoğu:** {', '.join(mirage)}\n"
+        msg += f"🏝️ Mirage Stoğu: {', '.join(mirage)}\n"
     else:
-        msg += f"🏝️ **Mirage Stoğu:** Aranan değerli meyve yok.\n"
-        
+        msg += f"🏝️ Mirage Stoğu: Aranan değerli meyve yok.\n"
     msg += f"\n🔗 Kontrol et: {TARGET_URL}"
     
-    requests.post(WEBHOOK_URL, json={"content": msg, "username": "Blox Ajanı", "avatar_url": "https://i.imgur.com/AfFp7pu.png"})
+    # 1. DISCORD BİLDİRİMİ
+    if WEBHOOK_URL:
+        try:
+            requests.post(WEBHOOK_URL, json={"content": msg, "username": "Blox Ajanı", "avatar_url": "https://i.imgur.com/AfFp7pu.png"})
+            print("Discord bildirimi gönderildi.")
+        except Exception as e:
+            print(f"Discord hatası: {e}")
+
+    # 2. TELEFON (NTFY) BİLDİRİMİ
+    if NTFY_TOPIC != "NTFY_KANAL_ADIN_BURAYA":
+        try:
+            # Telefonun acil durum gibi titremesi için öncelik ekliyoruz
+            headers = {
+                "Title": "🔥 STOKTA EFSANE MEYVE VAR!",
+                "Priority": "high", 
+                "Tags": "warning,video_game"
+            }
+            # Mesajı Türkçe karakter sorunu olmaması için utf-8 ile encode ediyoruz
+            requests.post(f"https://ntfy.sh/{NTFY_TOPIC}", data=msg.encode('utf-8'), headers=headers)
+            print("Telefon bildirimi gönderildi.")
+        except Exception as e:
+            print(f"Telefon bildirim hatası: {e}")
 
 if __name__ == "__main__":
-    if WEBHOOK_URL:
-        check_stock()
-    else:
-        print("HATA: Webhook URL bulunamadı!")
+    check_stock()
