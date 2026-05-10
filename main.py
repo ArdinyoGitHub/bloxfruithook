@@ -10,7 +10,7 @@ TARGET_URL = "https://fruityblox.com/stock"
 # BURA ÇOK ÖNEMLİ: Telefonda oluşturduğun benzersiz ntfy kanal adını buraya yaz!
 NTFY_TOPIC = "bloxfruitmythic_ardao" 
 
-SEARCH_KEYWORDS = ["pain", "yeti", "tiger", "mammoth", "gravity", "mythical", "kitsune", "leopard", "dragon", "magma", "dough", "t-rex"]
+SEARCH_KEYWORDS = ["yeti", "tiger", "mammoth", "gravity", "mythical", "kitsune", "leopard", "dragon", "dough", "t-rex"]
 
 def check_stock():
     scraped_data = {"normal": [], "mirage": []}
